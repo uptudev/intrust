@@ -16,6 +16,13 @@ To start the Intrust REPL, run the following command in your terminal:
 cargo run
 ```
 
+Optionally, binaries can be built and run directly via the following:
+```sh
+cargo build --release
+cd ./target/release
+./intrust
+```
+
 The REPL will greet you and display a prompt. You can enter Intrust code expressions at the prompt, and the interpreter will tokenize and process your input, displaying the parsed tokens and their types.
 
 ## Structure
