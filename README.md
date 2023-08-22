@@ -1,6 +1,6 @@
 # Intrust
 
-Intrust (***Int**erpretive **Rust***) is a simple programming language and interpreter built in Rust. This repository contains the source code for the Intrust interpreter, which allows you to interact with the language through a Read-Eval-Print Loop (REPL).
+Intrust *(**Int**erpretive **Rust**)* is a simple programming language and interpreter built in Rust. This repository contains the source code for the Intrust interpreter, which allows you to interact with the language through a Read-Eval-Print Loop (REPL).
 
 ## Getting Started
 
