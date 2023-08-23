@@ -53,8 +53,10 @@ mod repl {
 
 #[cfg(test)]
 mod tests {
-
     use crate::lexer::lexer::{Lexer, Token};
+    use crate::libs::ast::ast::Statement;
+    use crate::libs::parser::parser::Parser;
+
     #[test]
     fn test_next_token() {
         let input = "let xes = 1;
@@ -90,6 +92,58 @@ mod tests {
                 "Token lexing error, inequivalence in tests[{}]",
                 i
             );
+        }
+    }
+
+    #[test]
+    fn test_let_statements_pass() {
+        let input = "let x = 4;\nlet y = 10;\nlet foobar = 838383;\n";
+        test_let_statements(input);
+    }
+
+    #[test]
+    fn test_let_statements_fail() {
+        let input = "let x 4;\nlet = 10;\nlet 838383;\n";
+        test_let_statements(input);
+    }
+
+    fn test_let_statements(input: &str) {
+        let errors: Vec<String> = Vec::new();
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse_program();
+
+        check_parser_errors(&parser.errors);
+
+        if let Some(program) = program {
+            let tests: Vec<&str> = vec!("x", "y", "foobar");
+
+            for (i, stmt) in program.statements.iter().enumerate() {
+                if let Statement::Let(_) = stmt {
+                    if !test_let_statement(stmt, tests[i]) {
+                        // Handle test failure here, but don't panic inside the loop
+                    }
+                } else {
+                    // Handle non-LetStatement case here
+                }
+            }
+        } else {
+            parser.errors.push("parse_program returned None".to_string());
+        }
+    }
+
+    fn check_parser_errors(errors: &Vec<String>) {
+        let msg = format!("parser has {} errors:\n{}", errors.len(), errors.join("\n"));
+        assert!(errors.is_empty(), "{}", msg);
+    }
+
+    fn test_let_statement(statement: &Statement, expected_identifier: &str) -> bool {
+        match statement {
+            Statement::Let(let_stmt) => {
+                let name = &let_stmt.name.value;
+                name == expected_identifier
+            },
+            _ => false,
         }
     }
 }
