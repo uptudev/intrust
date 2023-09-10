@@ -96,6 +96,12 @@ mod tests {
     }
 
     #[test]
+    fn test_return_statements_pass() {
+        let input = "return 5;\nreturn 1;\n return 1020;";
+        test_return_statements(input);
+    }
+
+    #[test]
     fn test_let_statements_pass() {
         let input = "let x = 4;\nlet y = 10;\nlet foobar = 838383;\n";
         test_let_statements(input);
@@ -107,8 +113,27 @@ mod tests {
         test_let_statements(input);
     }
 
+    fn test_return_statements(input: &str) {
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse_program();
+
+        check_parser_errors(&parser.errors);
+
+        if let Some(program) = program {
+            for (_, statement) in program.statements.iter().enumerate() {
+                if let Statement::Return(_) = statement {
+
+                } else {
+                    
+                }
+            }
+        } else {
+            parser.errors.push("parse_program returned None".to_string());
+        }
+    }
+
     fn test_let_statements(input: &str) {
-        let errors: Vec<String> = Vec::new();
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
         let program = parser.parse_program();
@@ -118,9 +143,9 @@ mod tests {
         if let Some(program) = program {
             let tests: Vec<&str> = vec!("x", "y", "foobar");
 
-            for (i, stmt) in program.statements.iter().enumerate() {
-                if let Statement::Let(_) = stmt {
-                    if !test_let_statement(stmt, tests[i]) {
+            for (i, statement) in program.statements.iter().enumerate() {
+                if let Statement::Let(_) = statement {
+                    if !test_let_statement(statement, tests[i]) {
                         // Handle test failure here, but don't panic inside the loop
                     }
                 } else {

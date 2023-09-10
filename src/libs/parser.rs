@@ -1,5 +1,5 @@
 pub mod parser {
-    use crate::libs::ast::ast::Statement;
+    use crate::libs::{ast::ast::Statement, lexer::lexer::Token};
 
     use super::super::{ast::ast, lexer::lexer};
 
@@ -49,12 +49,20 @@ pub mod parser {
         fn parse_statement(&mut self) -> Option<Statement> {
             match self.curr_token {
                 lexer::Token::LET => {
-                    let stmt = match self.parse_let_statement() {
+                    let statement = match self.parse_let_statement() {
                         Some(let_statement) => {Statement::Let(Box::new(let_statement))},
                         None => {return None},
                     };
 
-                    Some(stmt)
+                    Some(statement)
+                },
+                lexer::Token::RETURN => {
+                    let statement = match self.parse_return_statement() {
+                        Some(return_statement) => {Statement::Return(Box::new(return_statement))},
+                        None => {return None}
+                    };
+
+                    Some(statement)
                 },
                 _ => {None},
             }
@@ -71,7 +79,7 @@ pub mod parser {
                 return None;
             }
 
-            let statement = ast::LetStatement{
+            let statement = ast::LetStatement {
                 token: self.curr_token.clone(),
                 name: Box::new(ast::Identifier{
                     token: self.curr_token.clone(), 
@@ -89,6 +97,19 @@ pub mod parser {
             }
 
             Some(statement)
+        }
+
+        fn parse_return_statement(&mut self) -> Option<ast::ReturnStatement> {
+            let statement = ast::ReturnStatement {
+                token: self.curr_token.clone(),
+                return_val: None,
+            };
+
+            while self.curr_token != Token::SEMI && self.curr_token != Token::EOF {
+                self.next_token();
+            }
+
+            return Some(statement);
         }
 
         fn expect_peek_ident(&mut self) -> bool {

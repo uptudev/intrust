@@ -3,6 +3,7 @@ pub mod ast {
 
     pub enum Statement {
         Let(Box<LetStatement>),
+        Return(Box<ReturnStatement>),
         Invalid,
     }
 
@@ -48,6 +49,21 @@ pub mod ast {
     }
 
     impl Node for LetStatement {
+        fn token_literal(&self) -> String {
+            return self.token.literal();
+        }
+    }
+
+    pub struct ReturnStatement {
+        pub token: Token,
+        pub return_val: Option<Box<dyn Expression>>,
+    }
+
+    impl ReturnStatement {
+
+    }
+
+    impl Node for ReturnStatement {
         fn token_literal(&self) -> String {
             return self.token.literal();
         }
