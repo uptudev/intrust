@@ -1,88 +1,61 @@
-pub mod ast {
-    use super::super::lexer::lexer::Token;
-
-    pub enum Statement {
-        Let(Box<LetStatement>),
-        Return(Box<ReturnStatement>),
-        Invalid,
-    }
-
-    impl Node for Statement {
-        fn token_literal(&self) -> String {
-            match self {
-                Statement::Let(statement) => {statement.token_literal()},
-                _ => {"".to_string()},
-            }
-        }
-    }
-
-    pub trait Node {
-        fn token_literal(&self) -> String;
-    }
-
-    pub trait Expression: Node {
-        fn expression_node(&self);
-    }
-
-    pub struct Program {
-        pub statements: Vec<Statement>,
-    }
-
-    impl Node for Program {
-        fn token_literal(&self) -> String {
-            if !self.statements.is_empty() {
-                return self.statements[0].token_literal();
-            } else {
-                return String::new();
-            }
-        }
-    }
-
-    pub struct LetStatement {
-        pub token: Token,
-        pub name: Box<Identifier>,
-        pub value: Option<Box<dyn Expression>>,
-    }
-
-    impl LetStatement {
-
-    }
-
-    impl Node for LetStatement {
-        fn token_literal(&self) -> String {
-            return self.token.literal();
-        }
-    }
-
-    pub struct ReturnStatement {
-        pub token: Token,
-        pub return_val: Option<Box<dyn Expression>>,
-    }
-
-    impl ReturnStatement {
-
-    }
-
-    impl Node for ReturnStatement {
-        fn token_literal(&self) -> String {
-            return self.token.literal();
-        }
-    }
-
-    pub struct Identifier {
-        pub token: Token,
-        pub value: String,
-    }
-
-    impl Expression for Identifier {
-        fn expression_node(&self) {
-            //idk why this is empty rn
-        }
-    }
-
-    impl Node for Identifier {
-        fn token_literal(&self) -> String {
-            return self.token.literal();
-        }
-    }
+#[derive(Clone, Debug, PartialEq)]
+pub enum Statement {
+    Let {name: String, value: Box<Expression>},     // mutable
+    Const {name: String, value: Box<Expression>},   // immutable
+    Assignment {name: String, value: Box<Expression>},
+    While {
+        condition: Box<Expression::Condition>,
+        body: Vec<Statement>,
+    },
+    Print {value: Box<Expression>},
+    Return {value: Box<Expression>},
 }
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Expression {
+    Condition(bool),
+    Variable(String),
+    Int(i32),
+    Long(i64),
+    UInt(u32),
+    ULong(u64),
+    Float(f32),
+    Double(f64),
+    NumOp { lhs: Box<Expression>, operator: Operator, rhs: Box<Expression>},
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Operator {
+    Add,        // +
+    Sub,        // -
+    Mul,        // *
+    Div,        // /
+    
+    // Binary Operators
+    AND,        // &
+    OR,         // |
+    NOT,        // !
+    XOR,        // ^
+    NAND,       // !&
+    NOR,        // !|
+    NXOR,       // !^
+    LShift,     // <<
+    RShift,     // >>
+
+    // Comparison Operators
+    Eq,         // ==
+    NotEq,      // !=
+    LessThan,   // <
+    GreatThan,  // >
+    LTEq,       // <=
+    GTEq,       // >=
+                
+    // Comparison Logic Operators
+    LogicAND,   // &&
+    LogicOR,    // ||
+    LogicXOR,   // ^^
+    LogicNAND,  // !&&
+    LogicNOR,   // !||
+    LogicXNOR,  // !^^
+}
+

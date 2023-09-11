@@ -1,0 +1,331 @@
+use std::str::FromStr;
+
+grammar;
+
+pub Expression = {
+    Bool => <>.to_string(),
+    Ident,
+    Num,
+    NumOp,
+};
+
+pub Operator = {
+    Level1Op,
+    Level2Op,
+    Level3Op,
+    Level4Op,
+    Level5Op,
+    ComparisonOp,
+    LogicOp,
+};
+
+NumOp: Expression = {
+    BitwiseExp,
+    BitShiftExp
+    AddOp,
+    MulOp,
+    NegationExp
+};
+
+Level1Op = {
+    AND,
+    XOR,
+    OR,
+    NAND,
+    NOR,
+    XNOR,
+};
+
+Level2Op = {
+    LeftShift,
+    RightShift,
+};
+
+Level3Op = {
+    Add,
+    Sub,
+}
+
+Level4Op = {
+    Mul,
+    Div,
+}
+
+Level5Op = {
+    NOT,
+}
+
+ComparisonOp = {
+    Equal,
+    NotEqual,
+    LessThan,
+    GreaterThan,
+    LTEq,
+    GTEq,
+};
+
+LogicOp = {
+    LogicAND,
+    LogicOR,
+    LogicXOR,
+    LogicNAND,
+    LogicNOR,
+    LogicXNOR,
+}
+
+Add: Operator         = "+" => Operator::Add;
+Sub: Operator         = "-" => Operator::Sub;
+Mul: Operator         = "*" => Operator::Mul;
+Div: Operator         = "/" => Operator::Div;
+    
+AND: Operator         = "&"  => Operator::AND;
+OR: Operator          = "|"  => Operator::OR;
+NOT: Operator         = "!"  => Operator::NOT;
+XOR: Operator         = "^"  => Operator::XOR;
+NAND: Operator        = "!&" => Operator::NAND;
+NOR: Operator         = "!|" => Operator::NOR;
+XNOR: Operator        = "!^" => Operator::XNOR;
+LeftShift: Operator   = "<<" => Operator::LShift;
+RightShift: Operator  = ">>" => Operator::RShift;
+
+Equal: Operator       = "==" => Operator::Eq;
+NotEqual: Operator    = "!=" => Operator::NotEq;
+LessThan: Operator    = "<"  => Operator::LessThan;
+GreaterThan: Operator = ">"  => Operator::GreatThan;
+LTEq: Operator        = "<=" => Operator::LTEq;
+GTEq: Operator        = ">=" => Operator::GTEq;
+
+LogicAND: Operator    = "&&"  => Operator::LogicAND;
+LogicOR: Operator     = "||"  => Operator::LogicOR;
+LogicXOR: Operator    = "^^"  => Operator::LogicXOR;
+LogicNAND: Operator   = "!&&" => Operator::LogicNAND;
+LogicNOR: Operator    = "!||" => Operator::LogicNOR;
+LogicXNOR: Operator   = "!^^" => Operator::LogicXNOR;
+
+pub Term = {
+    Num, 
+    Ident,
+    "(" Term ")"
+};
+
+pub Statement: Statement = {
+    LetStatement,
+    ConstStatement,
+    Assignment,
+    WhileLoop,
+    PrintStatement,
+    ReturnStatement,
+};
+
+Ident: String = r"\w+" => <>.to_string();
+
+Assignment: Statement = <id:Ident> <op:Operator?> "=" <value:Expression> ";" => {
+    Statement::Assignment {
+        name: id,
+        value: {
+            match op {
+                Some(operator) => Expression::Equivalency {
+                    lhs: Box::new(Expression::Variable(name)),
+                    operator,
+                    rhs: Box::new(value),
+                }
+                None => value,
+            }
+        },
+    }
+};
+
+LetStatement: Statement = "let" <a:Assignment> => {
+    Statement::Let {
+        name: a.name,
+        value: a.value,
+    }
+};
+
+ConstStatement: Statement = "const" <a:Assignment> => {
+    Statement::Const {
+        name: a.name,
+        value: a.value,
+    }
+};
+
+WhileLoop: Statement = "while" <condition:Bool> "{" <body:Statement*> "}" => {
+    Statement::While {
+        condition,
+        body,
+    }
+};
+
+PrintStatement: Statement = "print" <value:Expression> ";" => {
+    Statement::Print {
+        value,
+    }
+};
+
+ReturnStatement: Statement = "return" <value:Expression> ";" => {
+    Statement::Return {
+        value,
+    }
+};
+
+CodeBlock: Vec<Statement> = "{" <statements:Statement*> "}" => {
+    statements  
+};
+
+Equivalency: bool = {
+    <lhs:ControlFlow> <eq:ComparisonOp> <rhs:ControlFlow> => {
+        match eq {
+            Operator::Eq => {
+                return lhs == rhs;
+            },
+            Operator::NotEq => {
+                return lhs != rhs;
+            },
+            Operator::LessThan => {
+                return lhs < rhs;
+            },
+            Operator::GreatThan => {
+                return lhs > rhs;
+            },
+            Operator::LTEq => {
+                return lhs <= rhs;
+            },
+            Operator::GTEq => {
+                return lhs >= rhs;
+            },
+        }
+    },
+    ControlFlow,
+};
+
+ControlFlow = { 
+    <lhs:Bool> <op:LogicOp> <rhs:Bool> => {
+        match op {
+            Operator::LogicAND => {
+                return lhs & rhs;
+            },
+            Operator::LogicOR => {
+                return lhs | rhs;
+            },
+            Operator::LogicXOR => {
+                return lhs ^ rhs;
+            },
+            Operator::LogicNAND => {
+                return !(lhs & rhs);
+            },
+            Operator::LogicNOR => {
+                return !(lhs | rhs);
+            },
+            Operator::LogicXNOR => {
+                return !(lhs ^ rhs);
+            },
+        }
+    },
+    Bool,
+};
+
+BitwiseExp = {
+    <lhs:BitShiftExp> <op:Level1Op> <rhs:BitShiftExp> => {
+        match op {
+            Operator::AND => {
+                return lhs & rhs;
+            },
+            Operator::XOR => {
+                return lhs ^ rhs;
+            },
+            Operator::OR => {
+                return lhs | rhs;
+            },
+            Operator::NAND => {
+                return !(lhs & rhs);
+            },
+            Operator::NOR => {
+                return !(lhs | rhs);
+            },
+            Operator::XNOR => {
+                return !(lhs ^ rhs);
+            },
+        }
+    },
+    BitShiftExp,
+};
+
+BitShiftExp = {
+    <lhs:AddOp> <op:Level2Op> <rhs:AddOp> => {
+        match op {
+            Operator::LShift => {
+                return lhs << rhs;
+            },
+            Operator::RShift => {
+                return lhs >> rhs;
+            },
+        }
+    },
+    AddOp,
+};
+
+AddOp = {
+    <lhs:MulOp> <op:Level3Op> <rhs:MulOp> => {
+        match op {
+            Operator::Add => {
+                return lhs + rhs;
+            },
+            Operator::Sub => {
+                return lhs - rhs;
+            },
+        }
+    },
+    MulOp,
+};
+
+MulOp = {
+    <lhs:NegationExp> <op:Level4Op> <rhs:NegationExp> => {
+        match op {
+            Operator::Mul => {
+                return lhs * rhs;
+            },
+            Operator::Div => {
+                return lhs / rhs;
+            },
+        }
+    },
+    NegationExp,
+};
+
+NegationExp = {
+    Sub <n:NegationExp> => {
+        return -n;
+    },
+    NegationExp,
+    Num,
+    Ident,
+};
+
+Num = {Int, Long, UInt, ULong, Float, Double, Bool};
+
+Int: i32 = r"\d+" => i32::from_str(<>).unwrap();
+Long: i64 = r"\d+" => i64::from_str(<>).unwrap();
+UInt: u32 = r"\d+" => u32::from_str(<>).unwrap();
+ULong: u64 = r"\d+" => u64::from_str(<>).unwrap();
+Float: f32 = r"\d+\.\d*" => f32::from_str(<>).unwrap();
+Double: f64 = r"\d+\.\d*" => f64::from_str(<>).unwrap();
+Bool: bool = {
+    "true" => true, 
+    "false" => false,
+    Equivalency,
+};
+
+match {
+    // Skips whitespace and comments ("//" for single-line and "/* */" for multiline)
+    r"\s*" => { }, 
+    r"//[^\n\r]*[\n\r]*" => { },
+    r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/" => { },
+} else {
+    r"\d+\.\d*",
+    r"\d+",
+    "true",
+    "false",
+} else {
+    r"\w+",
+    _
+}
